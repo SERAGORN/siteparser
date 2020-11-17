@@ -8,3 +8,7 @@ CREATE TABLE `siteparser`.`tbl_article` (
 ALTER TABLE `siteparser`.`tbl_article`
 CHANGE COLUMN `title` `title` VARCHAR(100) NOT NULL ,
 CHANGE COLUMN `description` `description` VARCHAR(1000) NOT NULL ;
+
+ALTER TABLE `siteparser`.`tbl_article`
+ADD COLUMN `source_url` VARCHAR(100) NOT NULL AFTER `description`,
+ADD COLUMN `site_url` VARCHAR(100) NOT NULL AFTER `source_url`;

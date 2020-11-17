@@ -15,9 +15,16 @@ func NewArticleService(articleRepository domain.ArticleRepository) (domain.Artic
 	}, nil
 }
 
-func (s *articleService) GetArticle (ctx context.Context, articleId int64) (*domain.Article, error) {
+func (s *articleService) GetArticle(ctx context.Context, articleId int64) (*domain.Article, error) {
 
 	article, err := s.articleRepository.GetArticle(ctx, articleId)
 
 	return article, err
+}
+
+func (s *articleService) SaveArticles(ctx context.Context, articles []domain.Article) error {
+
+	err := s.articleRepository.SaveArticles(ctx, articles)
+
+	return err
 }

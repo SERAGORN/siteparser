@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"github.com/SERAGORN/siteparser/middlewares"
 	"github.com/SERAGORN/siteparser/domain"
+	"github.com/SERAGORN/siteparser/middlewares"
 	"github.com/SERAGORN/siteparser/respond"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi"
@@ -15,25 +15,12 @@ import (
 type ErrReason string
 
 const (
-	emptyRequestProblem      = ErrReason("empty_request")
 	requestParsingProblem    = ErrReason("request_parsing")
-	requestDecodingProblem   = ErrReason("request_decoding")
 	requestValidationProblem = ErrReason("request_validation")
-	userUnauthorized         = ErrReason("user_unauthorized")
 	internalServiceProblem   = ErrReason("service_internal")
-	emptySearchParams        = ErrReason("empty_search_params")
-	testNotUnique            = ErrReason("test_not_unique")
-	calculatorNotFound       = ErrReason("articles_not_found")
-	calculatorNotValid       = ErrReason("calculator_not_valid")
-
-	messageTestNotUnique        = "Test with this order type is already enabled"
-	messageTestCreated          = "Test successfully created"
-	messageTestStopped          = "Test successfully stopped"
-	messageCalculatorNotValid   = "Validation error"
-	messageServiceError         = "Service error"
-	messageStatsAddedToQueue    = "Stats added to queue"
-	messageStatsOnMakingProcess = "Stats on making process"
-	messageEmptyCityID          = "Empty cityID"
+	articlesNotFound         = ErrReason("articles_not_found")
+	ParsingProblem           = ErrReason("parsing_problem")
+	SaveParsedProblem        = ErrReason("save_parsed_problem")
 )
 
 type RouterDependencies struct {
@@ -64,13 +51,13 @@ func MakeRoutes(routerDependencies *RouterDependencies) (http.Handler, error) {
 		return nil, err
 	}
 
-	parserHandler, err := newParserHandler(routerDependencies.ParserService, routerDependencies.Validate, responder)
+	parserHandler, err := newParserHandler(routerDependencies.ParserService, routerDependencies.ArticleService, routerDependencies.Validate, responder)
 
 	if err != nil {
 		return nil, err
 	}
 
-	router.Route("/api",  func(r chi.Router) {
+	router.Route("/api", func(r chi.Router) {
 		r.Get("/article", articleHandler.handleGetArticles())
 		r.Get("/parse", parserHandler.handleInitParser())
 	})

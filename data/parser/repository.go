@@ -22,6 +22,5 @@ func (r *parserRepository) GetArticles() (*[]domain.Article, error) {
 		HrefTemplate:           "https://itproger.com/news/",
 	}
 
-	InitParser(rule)
-	return nil, nil
+	return GetParser(rule), nil
 }

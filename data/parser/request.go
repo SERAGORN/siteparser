@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/SERAGORN/siteparser/domain"
 	"log"
 	"net/http"
 	"sync"
@@ -15,7 +16,6 @@ type Parser struct {
 	PagesNums     int
 	PagesUrl      []string
 	PostsUrl      []string
-	Articles      []Article
 }
 
 type Rule struct {
@@ -29,31 +29,27 @@ type Rule struct {
 	HrefTemplate           string
 }
 
-type Article struct {
-	Url         string
-	Title       string
-	Description string
-}
-
-func InitParser(rule Rule) {
+func GetParser(rule Rule) *[]domain.Article {
 	pagesNum := rule.PagesNum
 	url := rule.Url
 	pageTemplate := url + rule.PageStruct
 	parser := Parser{Url: url, PagesTemplate: pageTemplate, PagesNums: pagesNum, Rule: rule}
 	parser.BuildPages()
 	parser.GetPostUrls()
-	parser.GetPosts()
+
+	return parser.GetPosts()
 }
 
-func (p *Parser) GetPosts() {
-	articles := make(chan Article)
-
+func (p *Parser) GetPosts() *[]domain.Article {
+	articles := make(chan domain.Article)
+	var resArticles []domain.Article
 	var wg sync.WaitGroup
 	wg.Add(len(p.PostsUrl))
 	for i := range p.PostsUrl {
 		go func(postUrl string) {
 			defer wg.Done()
 			result := p.parseArticle(postUrl)
+			result.SiteUrl = p.Url
 			articles <- result
 		}(p.PostsUrl[i])
 	}
@@ -64,9 +60,10 @@ func (p *Parser) GetPosts() {
 	}()
 
 	for article := range articles {
-		p.Articles = append(p.Articles, article)
-		fmt.Println(article.Title)
+		resArticles = append(resArticles, article)
 	}
+
+	return &resArticles
 }
 
 func (p *Parser) BuildPages() {
@@ -105,8 +102,8 @@ func (p *Parser) GetPostUrls() {
 	}
 }
 
-func (p *Parser) parseArticle(url string) Article {
-	article := Article{}
+func (p *Parser) parseArticle(url string) domain.Article {
+	article := domain.Article{}
 	url = p.Rule.HrefTemplate + url
 	res, err := http.Get(url)
 	if err != nil {
@@ -122,15 +119,13 @@ func (p *Parser) parseArticle(url string) Article {
 	if err != nil {
 		log.Fatal(err)
 	}
-	article.Url = url
+	article.SourceUrl = url
 	article.Title = doc.Find(p.Rule.ArticleTitleRule).Text()
 	article.Description = doc.Find(p.Rule.ArticleDescriptionRule).Text()
-	fmt.Println(article, p.Rule.ArticleTitleRule)
 	return article
 }
 
 func (p *Parser) parsePostUrls(url string) []string {
-	fmt.Println(url)
 	var postUrls []string
 	res, err := http.Get(url)
 	if err != nil {
@@ -153,7 +148,6 @@ func (p *Parser) parsePostUrls(url string) []string {
 		band, ok := s.Find(p.Rule.PostHrefRule).Attr("href")
 		if ok {
 			postUrls = append(postUrls, band)
-			fmt.Println(band)
 		}
 	})
 

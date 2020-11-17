@@ -33,9 +33,9 @@ func newArticleHandler(articleService domain.ArticleService, validate *validator
 	}
 
 	return &articleHandler{
-		articleService:  articleService,
-		validate:        validate,
-		respond:         responder,
+		articleService: articleService,
+		validate:       validate,
+		respond:        responder,
 	}, nil
 }
 
@@ -56,14 +56,13 @@ func (h *articleHandler) handleGetArticles() http.HandlerFunc {
 		}
 
 		params := domain.GetArticleParams{
-			Id:   r.Form.Get("id"),
+			Id: r.Form.Get("id"),
 		}
 
 		articleId, err := strconv.ParseInt(params.Id, 10, 64)
 		if err == nil {
 			fmt.Printf("%d of type %T", articleId, articleId)
 		}
-
 
 		if err := h.validate.Struct(params); err != nil {
 			sentry.CaptureException(err)
@@ -79,7 +78,7 @@ func (h *articleHandler) handleGetArticles() http.HandlerFunc {
 			}
 
 			if errors.Is(err, sql.ErrNoRows) {
-				h.respond.NotFound(w, response{ErrorReason: calculatorNotFound})
+				h.respond.NotFound(w, response{ErrorReason: articlesNotFound})
 				return
 			}
 			sentry.CaptureException(err)
