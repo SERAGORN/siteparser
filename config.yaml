@@ -1,0 +1,9 @@
+server:
+  host: "localhost"
+  port: "3333"
+  db:
+    host: "localhost:3306"
+    port: 3306
+    user: "root"
+    password: "root"
+    name: "siteparser"
