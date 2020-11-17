@@ -9,12 +9,24 @@ import (
 )
 
 type Parser struct {
-	Url      string
+	Rule          Rule
+	Url           string
 	PagesTemplate string
-	PagesNums int
-	PagesUrl    []string
-	PostsUrl []string
-	Articles []Article
+	PagesNums     int
+	PagesUrl      []string
+	PostsUrl      []string
+	Articles      []Article
+}
+
+type Rule struct {
+	Url                    string
+	PageStruct             string
+	PostContainerRule      string
+	PostHrefRule           string
+	ArticleTitleRule       string
+	ArticleDescriptionRule string
+	PagesNum               int
+	HrefTemplate           string
 }
 
 type Article struct {
@@ -23,16 +35,14 @@ type Article struct {
 	Description string
 }
 
-
-func InitParser() {
-	pagesNum := 10
-	url := "https://habr.com/ru/"
-	pageTemplate := url + "page"
-	parser := Parser{Url: url, PagesTemplate: pageTemplate, PagesNums: pagesNum}
+func InitParser(rule Rule) {
+	pagesNum := rule.PagesNum
+	url := rule.Url
+	pageTemplate := url + rule.PageStruct
+	parser := Parser{Url: url, PagesTemplate: pageTemplate, PagesNums: pagesNum, Rule: rule}
 	parser.BuildPages()
 	parser.GetPostUrls()
 	parser.GetPosts()
-	fmt.Println(parser.Articles)
 }
 
 func (p *Parser) GetPosts() {
@@ -41,9 +51,9 @@ func (p *Parser) GetPosts() {
 	var wg sync.WaitGroup
 	wg.Add(len(p.PostsUrl))
 	for i := range p.PostsUrl {
-		go func (postUrl string) {
+		go func(postUrl string) {
 			defer wg.Done()
-			result := parseArticle(postUrl)
+			result := p.parseArticle(postUrl)
 			articles <- result
 		}(p.PostsUrl[i])
 	}
@@ -53,9 +63,9 @@ func (p *Parser) GetPosts() {
 		close(articles)
 	}()
 
-
 	for article := range articles {
 		p.Articles = append(p.Articles, article)
+		fmt.Println(article.Title)
 	}
 }
 
@@ -72,11 +82,11 @@ func (p *Parser) GetPostUrls() {
 	wg.Add(len(p.PagesUrl))
 
 	for i := range p.PagesUrl {
-		go func (pageUrl string) {
+		go func(pageUrl string) {
 
 			defer wg.Done()
 
-			results := parsePostUrls(pageUrl)
+			results := p.parsePostUrls(pageUrl)
 
 			for i := range results {
 				postUrls <- results[i]
@@ -95,8 +105,9 @@ func (p *Parser) GetPostUrls() {
 	}
 }
 
-func parseArticle(url string) Article {
+func (p *Parser) parseArticle(url string) Article {
 	article := Article{}
+	url = p.Rule.HrefTemplate + url
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -112,16 +123,15 @@ func parseArticle(url string) Article {
 		log.Fatal(err)
 	}
 	article.Url = url
-	article.Title = doc.Find(".post__title-text").Text()
-	article.Description = doc.Find(".post__body .post__text").Text()
-	fmt.Println(article)
+	article.Title = doc.Find(p.Rule.ArticleTitleRule).Text()
+	article.Description = doc.Find(p.Rule.ArticleDescriptionRule).Text()
+	fmt.Println(article, p.Rule.ArticleTitleRule)
 	return article
 }
 
-func parsePostUrls(url string) []string {
-
+func (p *Parser) parsePostUrls(url string) []string {
+	fmt.Println(url)
 	var postUrls []string
-
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -138,11 +148,12 @@ func parsePostUrls(url string) []string {
 	}
 
 	// Find the review items
-	doc.Find(".post").Each(func(i int, s *goquery.Selection) {
+	doc.Find(p.Rule.PostContainerRule).Each(func(i int, s *goquery.Selection) {
 		// For each item found, get the band and title
-		band, ok := s.Find(".post__title a").Attr("href")
+		band, ok := s.Find(p.Rule.PostHrefRule).Attr("href")
 		if ok {
 			postUrls = append(postUrls, band)
+			fmt.Println(band)
 		}
 	})
 

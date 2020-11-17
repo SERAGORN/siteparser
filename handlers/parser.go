@@ -10,9 +10,9 @@ import (
 )
 
 type parserHandler struct {
-	parserService   domain.ParserService
-	validate        *validator.Validate
-	respond         *respond.Responder
+	parserService domain.ParserService
+	validate      *validator.Validate
+	respond       *respond.Responder
 }
 
 func newParserHandler(parserService domain.ParserService, validate *validator.Validate, responder *respond.Responder) (*parserHandler, error) {
@@ -29,21 +29,21 @@ func newParserHandler(parserService domain.ParserService, validate *validator.Va
 	}
 
 	return &parserHandler{
-		parserService:   parserService,
-		validate:        validate,
-		respond:         responder,
+		parserService: parserService,
+		validate:      validate,
+		respond:       responder,
 	}, nil
 }
 
 func (h *parserHandler) handleInitParser() http.HandlerFunc {
 	type (
 		response struct {
-			ErrorReason ErrReason   `json:"errorReason,omitempty"`
-			Result      string 		`json:"result,omitempty"`
+			ErrorReason ErrReason `json:"errorReason,omitempty"`
+			Result      string    `json:"result,omitempty"`
 		}
 	)
 
-	return  func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
 			sentry.CaptureException(err)
@@ -52,7 +52,7 @@ func (h *parserHandler) handleInitParser() http.HandlerFunc {
 		}
 
 		params := domain.ParserParams{
-			Resource:   r.Form.Get("resource"),
+			Resource: r.Form.Get("resource"),
 		}
 
 		h.parserService.GetArticles(r.Context(), params)

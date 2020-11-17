@@ -15,8 +15,6 @@ func NewParserService(parserRepository domain.ParserRepository) (domain.ParserSe
 	}, nil
 }
 
-func (s *parserService) GetArticles(ctx context.Context, params domain.ParserParams) (*[]domain.Article, error){
-
+func (s *parserService) GetArticles(ctx context.Context, params domain.ParserParams) (*[]domain.Article, error) {
 	return s.parserRepository.GetArticles()
 }
-
