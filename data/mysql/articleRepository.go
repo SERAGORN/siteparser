@@ -3,7 +3,6 @@ package mysql
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/SERAGORN/siteparser/domain"
 	"github.com/jmoiron/sqlx"
 )
@@ -40,9 +39,8 @@ func (r *articleRepository) GetArticle(ctx context.Context, articleId int64) (*d
 
 func (r *articleRepository) SearchArticles(ctx context.Context, searchText string) (*[]domain.Article, error) {
 	var articles []domain.Article
-	fmt.Println(searchText)
+
 	err := r.db.SelectContext(ctx, &articles, searchArticle, searchText)
-	fmt.Println(articles)
 	if err != nil {
 		return nil, err
 	}

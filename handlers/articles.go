@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/SERAGORN/siteparser/domain"
 	"github.com/SERAGORN/siteparser/respond"
 	"github.com/getsentry/sentry-go"
@@ -60,7 +59,6 @@ func (h *articleHandler) handleSearchArticles() http.HandlerFunc {
 				h.respond.NotFound(w, response{ErrorReason: articlesNotFound})
 				return
 			}
-			fmt.Println(err)
 			sentry.CaptureException(err)
 			h.respond.InternalServerError(w, response{ErrorReason: internalServiceProblem})
 			return

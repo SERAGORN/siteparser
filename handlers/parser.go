@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/SERAGORN/siteparser/domain"
 	"github.com/SERAGORN/siteparser/respond"
@@ -42,17 +43,17 @@ func (h *parserHandler) handleInitParser() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := domain.ParserParams{}
-		//if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		//	sentry.CaptureException(err)
-		//	h.respond.BadRequest(w, response{ErrorReason: requestParsingProblem})
-		//	return
-		//}
-		//
-		//if err := h.validate.Struct(request); err != nil {
-		//	sentry.CaptureException(err)
-		//	h.respond.BadRequest(w, response{ErrorReason: requestValidationProblem})
-		//	return
-		//}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			sentry.CaptureException(err)
+			h.respond.BadRequest(w, response{ErrorReason: requestParsingProblem})
+			return
+		}
+
+		if err := h.validate.Struct(request); err != nil {
+			sentry.CaptureException(err)
+			h.respond.BadRequest(w, response{ErrorReason: requestValidationProblem})
+			return
+		}
 
 		err := h.articleService.ParseArticles(r.Context(), request)
 		if err != nil {

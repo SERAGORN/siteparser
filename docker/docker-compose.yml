@@ -1,0 +1,31 @@
+version: "3.3"
+
+services:
+  mysql:
+    image: mysql:5.6
+    restart: always
+    volumes:
+      - ./mysql_schema/:/docker-entrypoint-initdb.d/
+    hostname: "mysql"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 5s
+      retries: 5
+    environment:
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3308:3306"
+  parser:
+    build:
+      context: "../"
+      dockerfile: "docker/go/Dockerfile"
+    hostname: "parser"
+    tty: true
+    ports:
+      - "8080:3333"
+    environment:
+      PARSER_MYSQL_HOST: "mysql:3306"
+    depends_on:
+      mysql:
+        condition: service_healthy

@@ -37,6 +37,11 @@ func main() {
 		cancel()
 	}()
 
+	mysqlHost := os.Getenv("PARSER_MYSQL_HOST")
+	if mysqlHost != "" {
+		cfg.Server.Db.Host = mysqlHost
+	}
+
 	sqlDB, err := mysql.InitMysql(sysCallContext, cfg.Server.Db.Host, cfg.Server.Db.Port, cfg.Server.Db.User, cfg.Server.Db.Password, cfg.Server.Db.Name)
 	if err != nil {
 		fmt.Println(err)
@@ -65,11 +70,12 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port),
+		Addr:    fmt.Sprintf(":%s", cfg.Server.Port),
 		Handler: router,
 	}
 
 	go func() {
+		fmt.Println("server starts:", cfg.Server.Port)
 		if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal("listen and serve error")
 		}

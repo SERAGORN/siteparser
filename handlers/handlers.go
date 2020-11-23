@@ -64,7 +64,7 @@ func MakeRoutes(routerDependencies *RouterDependencies) (http.Handler, error) {
 		r.Route("/search", func(r chi.Router) {
 			r.Get("/{"+searchValuePattern+"}", articleHandler.handleSearchArticles())
 		})
-		r.Get("/parse", parserHandler.handleInitParser())
+		r.Post("/parse", parserHandler.handleInitParser())
 	})
 
 	return router, err
