@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <div style="display: flex; flex-direction: column">
+        <label>url</label>
+        <input id="url" value="https://itproger.com/news/"/>
+        <label>pageStruct</label>
+        <input id="pageStruct" value="/page-"/>
+        <label>postContainerRule</label>
+        <input id="postContainerRule" value=".allArticles .article"/>
+        <label>postHrefRule</label>
+        <input id="postHrefRule" value="a"/>
+        <label>articleTitleRule</label>
+        <input id="articleTitleRule" value=".title"/>
+        <label>articleDescriptionRule</label>
+        <input id="articleDescriptionRule" value=".article_block .txt"/>
+        <label>pagesNum</label>
+        <input id="pagesNum" value="2"/>
+        <label>hrefTemplate</label>
+        <input id="hrefTemplate" value="https://itproger.com/news"/>
+
+        <button onclick="initParse()">Init Parse</button>
+    </div>
+    <script>
+
+        const fetcher = async (path, params = {}) => {
+            if (params.body) {
+                params.body = JSON.stringify(params.body)
+            }
+            params = {
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                // credentials: "include",
+                method: "POST",
+                ...params
+            }
+
+            let request = await fetch(path, params)
+            let response = await request.json()
+
+            if (response.msg && response.msg.text) {
+                alert(response.msg.text)
+            } else {
+                if (request.status >= 500) {
+                    alert("Ошибка запроса")
+                }
+            }
+
+            alert("Success")
+        }
+
+        function initParse() {
+            let params = {
+                body: {
+                    url: document.getElementById("url").value,
+                    pageStruct : document.getElementById("pageStruct").value,
+                    postContainerRule: document.getElementById("postContainerRule").value,
+                    postHrefRule: document.getElementById("postHrefRule").value,
+                    articleTitleRule: document.getElementById("articleTitleRule").value,
+                    articleDescriptionRule: document.getElementById("articleDescriptionRule").value,
+                    pagesNum: parseInt(document.getElementById("pagesNum").value),
+                    hrefTemplate: document.getElementById("hrefTemplate").value
+                }
+            }
+            console.log(params)
+            fetcher("http://localhost:8080/api/parse", params)
+        }
+    </script>
+</body>
+</html>
