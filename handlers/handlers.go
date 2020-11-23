@@ -23,9 +23,12 @@ const (
 	SaveParsedProblem        = ErrReason("save_parsed_problem")
 )
 
+const (
+	searchValuePattern = "searchValue"
+)
+
 type RouterDependencies struct {
 	ArticleService domain.ArticleService
-	ParserService  domain.ParserService
 	MySql          *sqlx.DB
 	Validate       *validator.Validate
 }
@@ -51,14 +54,16 @@ func MakeRoutes(routerDependencies *RouterDependencies) (http.Handler, error) {
 		return nil, err
 	}
 
-	parserHandler, err := newParserHandler(routerDependencies.ParserService, routerDependencies.ArticleService, routerDependencies.Validate, responder)
+	parserHandler, err := newParserHandler(routerDependencies.ArticleService, routerDependencies.Validate, responder)
 
 	if err != nil {
 		return nil, err
 	}
 
 	router.Route("/api", func(r chi.Router) {
-		r.Get("/article", articleHandler.handleGetArticles())
+		r.Route("/search", func(r chi.Router) {
+			r.Get("/{"+searchValuePattern+"}", articleHandler.handleSearchArticles())
+		})
 		r.Get("/parse", parserHandler.handleInitParser())
 	})
 

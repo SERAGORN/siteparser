@@ -6,7 +6,7 @@ import (
 	"github.com/SERAGORN/siteparser/data/mysql"
 	"github.com/SERAGORN/siteparser/data/parser"
 	"github.com/SERAGORN/siteparser/handlers"
-	"github.com/SERAGORN/siteparser/services"
+	"github.com/SERAGORN/siteparser/services/articlesrvc"
 	"gopkg.in/go-playground/validator.v9"
 	"log"
 	"net/http"
@@ -48,26 +48,20 @@ func main() {
 		log.Fatal("problem while trying to initialize article repository")
 	}
 
-	articleService, err := services.NewArticleService(articleRepository)
-	if err != nil {
-		log.Fatal("problem while trying to initialize article service")
-	}
-
 	parserRepository, err := parser.NewParserRepository()
 	if err != nil {
 		log.Fatal("problem while trying to initialize parser repository")
 	}
 
-	parserService, err := services.NewParserService(parserRepository)
+	articleService, err := articlesrvc.NewArticleService(articleRepository, parserRepository)
 	if err != nil {
-		log.Fatal("problem while trying to initialize parser service")
+		log.Fatal("problem while trying to initialize article service")
 	}
 
 	router, err := handlers.MakeRoutes(&handlers.RouterDependencies{
 		ArticleService: articleService,
-		ParserService: parserService,
-		Validate:        validate,
-		MySql: sqlDB,
+		Validate:       validate,
+		MySql:          sqlDB,
 	})
 
 	srv := &http.Server{

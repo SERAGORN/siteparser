@@ -3,14 +3,16 @@ package domain
 import "context"
 
 type ArticleService interface {
+	ParseArticles(ctx context.Context, params ParserParams) error
 	GetArticle(ctx context.Context, articleId int64) (*Article, error)
 	SaveArticles(ctx context.Context, article []Article) error
+	SearchArticles(ctx context.Context, searchText string) (*[]Article, error)
 }
 
 type ArticleRepository interface {
 	GetArticle(ctx context.Context, articleId int64) (*Article, error)
-	SaveArticle(ctx context.Context, article Article) error
 	SaveArticles(ctx context.Context, articles []Article) error
+	SearchArticles(ctx context.Context, searchText string) (*[]Article, error)
 }
 
 type Article struct {

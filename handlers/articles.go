@@ -8,9 +8,9 @@ import (
 	"github.com/SERAGORN/siteparser/domain"
 	"github.com/SERAGORN/siteparser/respond"
 	"github.com/getsentry/sentry-go"
+	"github.com/go-chi/chi"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
-	"strconv"
 )
 
 type articleHandler struct {
@@ -39,40 +39,19 @@ func newArticleHandler(articleService domain.ArticleService, validate *validator
 	}, nil
 }
 
-func (h *articleHandler) handleGetArticles() http.HandlerFunc {
+func (h *articleHandler) handleSearchArticles() http.HandlerFunc {
 	type (
 		response struct {
-			ErrorReason ErrReason       `json:"errorReason,omitempty"`
-			Result      *domain.Article `json:"result,omitempty"`
+			ErrorReason ErrReason         `json:"errorReason,omitempty"`
+			Result      *[]domain.Article `json:"result,omitempty"`
 		}
 	)
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := r.ParseForm()
+		searchValue := chi.URLParam(r, searchValuePattern)
+
+		articles, err := h.articleService.SearchArticles(r.Context(), searchValue)
 		if err != nil {
-			sentry.CaptureException(err)
-			h.respond.BadRequest(w, response{ErrorReason: requestParsingProblem})
-			return
-		}
-
-		params := domain.GetArticleParams{
-			Id: r.Form.Get("id"),
-		}
-
-		articleId, err := strconv.ParseInt(params.Id, 10, 64)
-		if err == nil {
-			fmt.Printf("%d of type %T", articleId, articleId)
-		}
-
-		if err := h.validate.Struct(params); err != nil {
-			sentry.CaptureException(err)
-			h.respond.BadRequest(w, response{ErrorReason: requestValidationProblem})
-			return
-		}
-
-		articles, err := h.articleService.GetArticle(r.Context(), articleId)
-		if err != nil {
-
 			if errors.Is(err, context.Canceled) {
 				return
 			}
@@ -81,6 +60,7 @@ func (h *articleHandler) handleGetArticles() http.HandlerFunc {
 				h.respond.NotFound(w, response{ErrorReason: articlesNotFound})
 				return
 			}
+			fmt.Println(err)
 			sentry.CaptureException(err)
 			h.respond.InternalServerError(w, response{ErrorReason: internalServiceProblem})
 			return

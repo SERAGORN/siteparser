@@ -10,34 +10,41 @@ import (
 )
 
 type Parser struct {
-	Rule          Rule
-	Url           string
-	PagesTemplate string
-	PagesNums     int
-	PagesUrl      []string
-	PostsUrl      []string
+	Rule      Rule
+	Url       string
+	PagesNums int
+	PagesUrl  []string
+	PostsUrl  []string
 }
 
+// Rule of parse news
 type Rule struct {
-	Url                    string
-	PageStruct             string
-	PostContainerRule      string
-	PostHrefRule           string
-	ArticleTitleRule       string
+	//Url Page of news example"https://itproger.com/news/"
+	Url string
+	//PostContainerRule html container location from father to child,
+	//using tags html classes and id,
+	//the more nesting the more accurate example: ".allArticles .article"
+	PostContainerRule string
+	//PostHrefRule html href of post container, usually: tag <a>
+	//example: "a"
+	PostHrefRule string
+	//ArticleTitleRule  html post title location from article page,
+	//using tags html classes and id,
+	//the more nesting the more accurate example: ".title"
+	ArticleTitleRule string
+	//ArticleTitleRule  html post description location from article page,
+	//using tags html classes and id,
+	//the more nesting the more accurate example: ".title"
 	ArticleDescriptionRule string
-	PagesNum               int
-	HrefTemplate           string
-}
-
-func GetParser(rule Rule) *[]domain.Article {
-	pagesNum := rule.PagesNum
-	url := rule.Url
-	pageTemplate := url + rule.PageStruct
-	parser := Parser{Url: url, PagesTemplate: pageTemplate, PagesNums: pagesNum, Rule: rule}
-	parser.BuildPages()
-	parser.GetPostUrls()
-
-	return parser.GetPosts()
+	//PagesNum nums of main news site pages count "https://itproger.com/news/1" "https://itproger.com/news/2" etc...
+	//parsed only two pages of articles example: 2
+	PagesNum int
+	//HrefTemplate template of pages home
+	//example "https://itproger.com/news/"
+	HrefTemplate string
+	//PagesStruct appends of pages index and build url with HrefTemplate
+	//Example: "%d/"
+	PagesStruct string
 }
 
 func (p *Parser) GetPosts() *[]domain.Article {
@@ -67,8 +74,8 @@ func (p *Parser) GetPosts() *[]domain.Article {
 }
 
 func (p *Parser) BuildPages() {
-	for i := 0; i < p.PagesNums; i++ {
-		p.PagesUrl = append(p.PagesUrl, fmt.Sprintf("%s%d/", p.PagesTemplate, p.PagesNums+1))
+	for i := 1; i < p.PagesNums; i++ {
+		p.PagesUrl = append(p.PagesUrl, fmt.Sprintf("%s%s%d", p.Rule.HrefTemplate, p.Rule.PagesStruct, i))
 	}
 }
 
@@ -104,20 +111,20 @@ func (p *Parser) GetPostUrls() {
 
 func (p *Parser) parseArticle(url string) domain.Article {
 	article := domain.Article{}
-	url = p.Rule.HrefTemplate + url
+	url = p.Rule.HrefTemplate + "/" + url
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s, %s", res.StatusCode, res.Status, url)
+		log.Println("status code error: %d %s, %s", res.StatusCode, res.Status, url)
 	}
 
 	// Load the HTML document
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	article.SourceUrl = url
 	article.Title = doc.Find(p.Rule.ArticleTitleRule).Text()
@@ -129,17 +136,17 @@ func (p *Parser) parsePostUrls(url string) []string {
 	var postUrls []string
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s, %s", res.StatusCode, res.Status, url)
+		log.Println("status code error: %d %s, %s", res.StatusCode, res.Status, url)
 	}
 
 	// Load the HTML document
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	// Find the review items
