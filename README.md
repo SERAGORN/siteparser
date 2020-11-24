@@ -19,7 +19,7 @@ mysql_password: root
 
 An example of starting parsing is written in ./index.html.
 
-Searching http://localhost:8080:/api/search/{searchValue}
+Searching: GET request on http://localhost:8080:/api/search/{searchValue}
 
 will be given in json format 
 
